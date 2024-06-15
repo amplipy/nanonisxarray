@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 #originally sourced from nanonispy by underchemist
 #modified by Petro Maksymovych to: (1) make context aware header parser;
 #                                   (2)package data to xarray

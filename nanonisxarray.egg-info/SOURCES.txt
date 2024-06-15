@@ -1,0 +1,11 @@
+LICENSE
+README.md
+setup.py
+nanonisxarray/__init__.py
+nanonisxarray/file_io.py
+nanonisxarray/nanonisio.py
+nanonisxarray.egg-info/PKG-INFO
+nanonisxarray.egg-info/SOURCES.txt
+nanonisxarray.egg-info/dependency_links.txt
+nanonisxarray.egg-info/requires.txt
+nanonisxarray.egg-info/top_level.txt
