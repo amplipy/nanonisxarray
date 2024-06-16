@@ -13,6 +13,7 @@ Created on Wed Jan 11 18:31:02 2017
 @author: peter
 """
 from .modules import *
+from .nanonisio import *
 
 #
 
@@ -108,7 +109,7 @@ class GetData:
     def find_data(cls, topdir=[], ext='3ds', skip=['blank'], get_data=False, header_only=False):
         # directory crawler: return all files of a given extension
         # in the current and all the nested directories
-        from data_xray import nanonisio as nio
+        #from data_xray import nanonisio as nio
 
         dataList = list()
         dataFiles = list()
@@ -121,15 +122,16 @@ class GetData:
                     dataFiles.append(os.path.join(root, name))
                     # grids.append(nio.Grid(fname=addname))
         dataFiles = [x for _, x in sorted(zip([os.path.getmtime(f) for f in dataFiles], dataFiles))];
+        dataFiles = [f for f in dataFiles if os.path.getsize(f) > 10000]
 
         if get_data:
             for d in tqdm(dataFiles):
                 if len(re.findall('sxm', d)):
-                    dataList.append(nio.Scan(fname=d, header_only=header_only))
+                    dataList.append(Scan(fname=d, header_only=header_only))
                 elif len(re.findall('3ds', d)):
-                    dataList.append(nio.Grid(fname=d,header_only=header_only))
+                    dataList.append(Grid(fname=d,header_only=header_only))
                 elif len(re.findall('dat', d)):
-                    dataList.append(nio.Spectrum(fname=d,header_only=header_only))
+                    dataList.append(Spectrum(fname=d,header_only=header_only))
                     
             return dataList
         else:
@@ -171,50 +173,50 @@ class GetData:
         a.close()
         return datlist
     
-    @classmethod
-    def find_grids(cls, topdir=[], ext='3ds', skip=['blank'], get_data=False):
-        # directory crawler: return all files of a given extension
-        # in the current and all the nested directories
-        from data_xray import nanonisio as nio
+    # @classmethod
+    # def find_grids(cls, topdir=[], ext='3ds', skip=['blank'], get_data=False):
+    #     # directory crawler: return all files of a given extension
+    #     # in the current and all the nested directories
+    #     #from data_xray import nanonisio as nio
     
-        fn = dict()
-        grids = list()
-        fnames = list()
+    #     fn = dict()
+    #     grids = list()
+    #     fnames = list()
 
-        for root, dirs, files in tqdm(os.walk(topdir)):
-            for name in (files):
-                shouldBeSkipped = np.mean([name.find(s) for s in skip])
-                if len(re.findall('\.' + ext, name)) and shouldBeSkipped<0:
-                    addname = os.path.join(root, name)
-                    fnames.append(addname)
-                    if get_data:
-                        grids.append(nio.Grid(fname=addname))
-        return grids if get_data else fnames
+    #     for root, dirs, files in tqdm(os.walk(topdir)):
+    #         for name in (files):
+    #             shouldBeSkipped = np.mean([name.find(s) for s in skip])
+    #             if len(re.findall('\.' + ext, name)) and shouldBeSkipped<0:
+    #                 addname = os.path.join(root, name)
+    #                 fnames.append(addname)
+    #                 if get_data:
+    #                     grids.append(Grid(fname=addname))
+    #     return grids if get_data else fnames
 
-    @classmethod
-    def find_scans(cls, topdir=[], ext='sxm', skip=['blank'],get_data=False):
-        import pandas as pd
-        from data_xray import nanonisio as nio
+    # @classmethod
+    # def find_scans(cls, topdir=[], ext='sxm', skip=['blank'],get_data=False):
+    #     import pandas as pd
+    #     #from data_xray import nanonisio as nio
 
-        scans = list()
-        fnames = list()
-        for root, dirs, files in (os.walk(topdir)):
-            for name in tqdm(files):
+    #     scans = list()
+    #     fnames = list()
+    #     for root, dirs, files in (os.walk(topdir)):
+    #         for name in tqdm(files):
                 
-                shouldBeSkipped = np.mean([name.find(s) for s in skip])
-                if len(re.findall('\.' + ext, name)) and shouldBeSkipped<0:
-                    addname = os.path.join(root, name)
-                    fnames.append(addname)
+    #             shouldBeSkipped = np.mean([name.find(s) for s in skip])
+    #             if len(re.findall('\.' + ext, name)) and shouldBeSkipped<0:
+    #                 addname = os.path.join(root, name)
+    #                 fnames.append(addname)
                     
-                    if get_data:
-                        scans.append(nio.Scan(fname=addname))
-        return scans if get_data else fnames
+    #                 if get_data:
+    #                     scans.append(Scan(fname=addname))
+    #     return scans if get_data else fnames
    
 
 
 def FindScans(topdir=[], ext='sxm', skip=['blank'],get_data=False):
     import pandas as pd
-    from data_xray import nanonisio as nio
+    #from data_xray import nanonisio as nio
 
     scans = list()
     fnames = list()
@@ -227,7 +229,7 @@ def FindScans(topdir=[], ext='sxm', skip=['blank'],get_data=False):
                 fnames.append(addname)
                 
                 if get_data:
-                    scans.append(nio.Scan(fname=addname))
+                    scans.append(Scan(fname=addname))
     return scans if get_data else fnames    
  
 def SimpleCSVread(fl, separator, header=0):
@@ -301,7 +303,7 @@ def select_folder():
 def FindData(topdir=[], ext='3ds', skip=['blank'], get_data=False, header_only=False):
     # directory crawler: return all files of a given extension
     # in the current and all the nested directories
-    from data_xray import nanonisio as nio
+    #from data_xray import nanonisio as nio
 
     dataList = list()
     dataFiles = list()
@@ -317,11 +319,11 @@ def FindData(topdir=[], ext='3ds', skip=['blank'], get_data=False, header_only=F
 
     for d in tqdm(dataFiles):
         if len(re.findall('sxm', d)):
-            dataList.append(nio.Scan(fname=d, header_only=header_only))
+            dataList.append(Scan(fname=d, header_only=header_only))
         elif len(re.findall('3ds', d)):
-            dataList.append(nio.Grid(fname=d,header_only=header_only))
+            dataList.append(Grid(fname=d,header_only=header_only))
         elif len(re.findall('dat', d)):
-            dataList.append(nio.Spectrum(fname=d,header_only=header_only))
+            dataList.append(Spectrum(fname=d,header_only=header_only))
 
 
     return dataList if get_data else dataFiles
@@ -329,7 +331,7 @@ def FindData(topdir=[], ext='3ds', skip=['blank'], get_data=False, header_only=F
 def FindGrids(topdir=[], ext='3ds', skip=['blank'], get_data=False):
     # directory crawler: return all files of a given extension
     # in the current and all the nested directories
-    from data_xray import nanonisio as nio
+    #from data_xray import nanonisio as nio
   
     fn = dict()
     grids = list()
@@ -342,12 +344,12 @@ def FindGrids(topdir=[], ext='3ds', skip=['blank'], get_data=False):
                 addname = os.path.join(root, name)
                 fnames.append(addname)
                 if get_data:
-                    grids.append(nio.Grid(fname=addname))
+                    grids.append(Grid(fname=addname))
     return grids if get_data else fnames
 
 def FindScans(topdir=[], ext='sxm', skip=['blank'],get_data=False):
     import pandas as pd
-    from data_xray import nanonisio as nio
+    #from data_xray import nanonisio as nio
 
     scans = list()
     fnames = list()
@@ -360,7 +362,7 @@ def FindScans(topdir=[], ext='sxm', skip=['blank'],get_data=False):
                 fnames.append(addname)
                 
                 if get_data:
-                    scans.append(nio.Scan(fname=addname))
+                    scans.append(Scan(fname=addname))
     return scans if get_data else fnames
 
 

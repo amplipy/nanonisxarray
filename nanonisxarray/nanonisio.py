@@ -161,7 +161,7 @@ class Grid(NanonisFile):
     def __init__(self, fname=None, fromcdf=None, savecdf=0, header_only=False):
        
         if fromcdf is None:
-            #try:
+            try:
                 _is_valid_file(fname, ext='3ds')
                 super().__init__(fname)
                 self._parse_3ds_header(self.header_raw)
@@ -185,7 +185,7 @@ class Grid(NanonisFile):
                 self.ncdf_name = fname[:-3] + 'nc'
 
                 print(fname + " imported")
-            #except:
+            except:
                 print("reading " + fname + " failed")
                 return None
         #else:
@@ -274,7 +274,7 @@ class Grid(NanonisFile):
                 try:
                     sweep_start, sweep_end = self.signals['params'][0, 0, :2]
                     num_sweep_signal = self.header['num_sweep_signal']
-                    return np.linspace(sweep_start, sweep_end, num_sweep_signal, dtype=np.float32)
+                    return np.linspace(sweep_start, sweep_end, num_sweep_signal, dtype=float)
                 except:
                     print('something wrong with sweep signal 2')
                     return None
@@ -285,7 +285,7 @@ class Grid(NanonisFile):
                 print('this worked')
                 sweep_start, sweep_end = self.signals['params'][0, 0, :2]
                 num_sweep_signal = self.header['num_sweep_signal']
-                return np.linspace(sweep_start, sweep_end, num_sweep_signal, dtype=np.float32)
+                return np.linspace(sweep_start, sweep_end, num_sweep_signal, dtype=float)
             except:
                 print('something wrong with sweep signal 3')
                 return None
@@ -645,12 +645,12 @@ class Scan(NanonisFile):
 
         for k in entries_to_be_floated:
             if isinstance(header_dict[k], list):
-                header_dict[k] = np.asarray(header_dict[k], dtype=np.float)
+                header_dict[k] = np.asarray(header_dict[k], dtype=float)
             else:
-                header_dict[k] = np.float(header_dict[k])
+                header_dict[k] = float(header_dict[k])
 
         for k in entries_to_be_inted:
-             header_dict[k] = np.asarray(header_dict[k], dtype=np.int)
+             header_dict[k] = np.asarray(header_dict[k], dtype=int)
 
         for k in entries_to_be_tabled:
             s2 = header_dict[k].split('\n')
