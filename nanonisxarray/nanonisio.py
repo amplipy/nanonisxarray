@@ -519,6 +519,7 @@ class Scan(NanonisFile):
         _is_valid_file(fname, ext='sxm')
         super().__init__(fname)
         self.header = self._parse_sxm_header(self.header_raw)
+        self.header2 = self.parse_header()
         # data begins with 4 byte code, add 4 bytes to offset instead
         if header_only:
             return
@@ -528,6 +529,7 @@ class Scan(NanonisFile):
         # load data
         #return self.header_raw
         self.signals = self._load_data()
+        
         self._to_dataset()
 
     def _load_data(self):
@@ -540,8 +542,9 @@ class Scan(NanonisFile):
         """
         channs = list(self.header['data_info']['Name'])
         nchanns = len(channs)
+        print(channs)
         nx, ny = self.header['scan_pixels']
-
+        
         # assume both directions for now
         ndir = 2
 
@@ -554,6 +557,7 @@ class Scan(NanonisFile):
         scandata = np.fromfile(f, dtype=data_format)
         f.close()
 
+        
         # reshape
         scandata_shaped = scandata.reshape(nchanns, ndir, nx, ny)
 
@@ -597,7 +601,34 @@ class Scan(NanonisFile):
 
         ds.attrs = self.header
         self.ds = ds
+    
+            
+    def parse_header(self):
+        #this is borrowed from excellent PySPM!
 
+        assert os.path.exists(self.fname)
+        self.f = open(self.fname, "rb")
+        l = ""
+        key = ""
+        header2 = {}
+        while l != b":SCANIT_END:":
+            l = self.f.readline().rstrip()
+            if l[:1] == b":":
+                key = l.split(b":")[1].decode("ascii")
+                header2[key] = []
+            else:
+                if l:  # remove empty lines
+                    try:
+                        header2[key].append(l.decode("ascii").split())
+                    except UnicodeDecodeError:
+                        header2[key].append(l.decode("unicode_escape").split())
+
+        while self.f.read(1) != b"\x1a":
+            pass
+        assert self.f.read(1) == b"\x04"
+        assert header2["SCANIT_TYPE"][0][0] in ["FLOAT", "INT", "UINT", "DOUBLE"]
+        return header2
+    #
     def _parse_sxm_header(self, header_raw):
         """
         Parse raw header string.
@@ -621,11 +652,12 @@ class Scan(NanonisFile):
         h_names = [j for j in header_entries if j.isupper() and j.startswith(':') and j.endswith(':')]
         h_vals = [j for j in header_entries if j not in h_names]
 
+        
         for j in h_names:
             sb,sa = header_raw.strip().split(j)
             value = sa.strip().split(':')[0].strip()
             header_dict[j.lower().strip(':')] = value
-
+        
         entries_to_be_split = ['scan_offset',
                                'scan_pixels',
                                'scan_range',
@@ -656,6 +688,27 @@ class Scan(NanonisFile):
             s2 = header_dict[k].split('\n')
             s3 = [j.strip().split('\t') for j in s2]
             header_dict[k]= pd.DataFrame(s3[1:], columns=s3[0])
+        
+        header_pyspm = self.parse_header()
+
+        header_dict["data_info"] = pd.DataFrame(header_pyspm["DATA_INFO"][1:],columns=header_pyspm["DATA_INFO"][0])
+        
+        # #"hack" to use PySPM header parser for SXM files.
+        # header_dict = self.parse_header() 
+        # header_dict = {k.lower(): v for k, v in header_dict.items()}
+
+        # for k in entries_to_be_floated:
+        #     if isinstance(header_dict[k], list):
+        #         header_dict[k] = np.asarray(header_dict[k], dtype=float)
+        #     else:
+        #         header_dict[k] = float(header_dict[k])
+
+        # for k in entries_to_be_inted:
+        #      header_dict[k] = np.asarray(header_dict[k], dtype=int)
+
+        # # for k in entries_to_be_tabled:
+        # #     header_dict[k]= pd.DataFrame(header_dict[k][1:], columns=header_dict[k][0])
+
 
         header_dict['fname'] = self.fname
         return header_dict
