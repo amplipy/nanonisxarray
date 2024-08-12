@@ -307,41 +307,103 @@ class Grid(NanonisFile):
         """
         return self.signals['params'][:, :, 4]
 
-    def _build_xarray(self, savecdf=None):
+    # def _build_xarray(self, savecdf=None):
 
-        ds = xr.Dataset()
+    #     ds = xr.Dataset()
 
+    #     #         ldict = {
+    #     #         'Vert. Deflection' : 'vd', 'Horiz. Deflection': 'hd', 'Input 8' : 'c', 'Current':'c',\
+    #     #         'Z': 'z', 'Phase' : 'phi', 'Amplitude' : 'amp', 'Frequency Shift' : 'omega', 'OC D1 X (m)': 'liX',\
+    #     #   'OC D1 Y (m)':'liY', "LockinX (V)":'liX', "LockinY (V)":'liY',\
+    #     #       'Femto': 'c'}
+
+    #     ldict = {
+    #     'Vert. Deflection' : 'vd', 'Horiz. Deflection': 'hd', 'Input 8' : 'c', 'Current':'c',\
+    #     'Z': 'z', 'Phase' : 'phi', 'Amplitude' : 'amp', 'Frequency Shift' : 'omega', 'OC D1 X (m)': 'lix',\
+    #     'OC D1 Y (m)':'liy', "LockinX (V)":'lix', "LockinY (V)":'liy',\
+    #     'Femto': 'c', 'M2: LI Demod 1 X': 'm2lix1', 'LI Demod 1 X':'lix1', 'LI Demod 1 Y':'liy1',\
+    #     'LI Demod 3 X':'lix3', 'LI Demod 3 Y':'liy3', 'Z rel (m)':'z'}
+        
+    #     try:
+    #         sweep_name = self.header['sweep_signal'].lower().split(' ')[0]
+    #     except:
+    #         sweep_name = 'bias'
+
+    #     ds.coords[sweep_name] = self.signals['sweep_signal']
+    #     for k,v in ldict.items():
+
+    #         for m in ([i for i in self.signals.keys() if i.find(k) != -1]):
+    #             sname = v + 'f'
+    #             if m.find('bwd') != -1:
+    #                 sname = v + 'r'
+
+    #             ds[sname] = (('x', 'y', sweep_name), self.signals[m])
+
+    #     for k,v in self.header.items():
+    #        ds.attrs[k] = v
+    #     ds.attrs['filename'] = self.fname
+
+    #     self.ds = ds
+    #     if savecdf is not None:
+    #         ds.attrs['cdf'] = savecdf
+    #         ds.to_netcdf(path=savecdf)
+    #         pyperclip.copy(savecdf)
+    #         print('grid(3ds)->netCDF complete! :: ' + savecdf)
+
+    def _build_xarray(self, savecdf=None, avg_only=True):
+        import xarray as xr
+                
+        
         ldict = {
         'Vert. Deflection' : 'vd', 'Horiz. Deflection': 'hd', 'Input 8' : 'c', 'Current':'c',\
-        'Z': 'z', 'Phase' : 'phi', 'Amplitude' : 'amp', 'Frequency Shift' : 'omega', 'OC D1 X (m)': 'liX',\
-  'OC D1 Y (m)':'liY', "LockinX (V)":'liX', "LockinY (V)":'liY',\
-      'Femto': 'c'}
+        'Z': 'z', 'Phase' : 'phi', 'Amplitude' : 'amp', 'Frequency Shift' : 'omega', 'OC D1 X (m)': 'lix',\
+        'OC D1 Y (m)':'liy', "LockinX (V)":'lix', "LockinY (V)":'liy',\
+        'Femto': 'c', 'M2: LI Demod 1 X': 'm2lix1', 'LI Demod 1 X':'lix1', 'LI Demod 1 Y':'liy1',\
+        'LI Demod 3 X':'lix3', 'LI Demod 3 Y':'liy3', 'Z rel (m)':'z'}
+        
+        
+        #sweep_key = list(self.signals.keys())[0]
+        
+        sweep_name=self.header["sweep_signal"].lower().split(" ")[0]
 
-        try:
-            sweep_name = self.header['sweep_signal'].lower().split(' ')[0]
-        except:
-            sweep_name = 'bias'
+        #self.header['dim_px']
 
-        ds.coords[sweep_name] = self.signals['sweep_signal']
-        for k,v in ldict.items():
+       
+        _signals = list(self.signals.keys())
+        
+        _signals = [s for s in list(_signals) if '[filt]' not in s]
+    
+        
+        if avg_only:
+            _signals = [s for s in list(_signals) if 'AVG' in s]
+        
+        dset_keys = []
 
-            for m in ([i for i in self.signals.keys() if i.find(k) != -1]):
+        for k, v in ldict.items():
+
+            for m in ([i for i in _signals if k in i]):
                 sname = v + 'f'
-                if m.find('bwd') != -1:
+                
+                if 'bwd' in m:
                     sname = v + 'r'
 
-                ds[sname] = (('x', 'y', sweep_name), self.signals[m])
+                dset_keys.append([sname, m])
 
-        for k,v in self.header.items():
-           ds.attrs[k] = v
-        ds.attrs['filename'] = self.fname
+        ds = xr.Dataset({
+            dset_keys[0][0] : (('x','y',sweep_name), self.signals[dset_keys[0][1]]),
+        })
+        
+        for j in range(1,len(dset_keys)):
+            ds[dset_keys[j][0]] = (('x','y',sweep_name), self.signals[dset_keys[j][1]])
+        
+        ds = ds.assign_coords(**{sweep_name:self.signals["sweep_signal"],
+                                 "x":np.arange(self.header['dim_px'][0]),
+                                 "y":np.arange(self.header['dim_px'][1])})
 
         self.ds = ds
-        if savecdf is not None:
-            ds.attrs['cdf'] = savecdf
-            ds.to_netcdf(path=savecdf)
-            pyperclip.copy(savecdf)
-            print('grid(3ds)->netCDF complete! :: ' + savecdf)
+
+        return ds
+    
 
     def _parse_3ds_header(self,header_raw):
         import copy
@@ -805,7 +867,7 @@ class Spectrum(NanonisFile):
         'Femto': 'c', 'M2: LI Demod 1 X': 'm2lix1', 'LI Demod 1 X':'lix1', 'LI Demod 1 Y':'liy1',\
         'LI Demod 3 X':'lix3', 'LI Demod 3 Y':'liy3', 'Z rel (m)':'z'}
         
-        
+       
 
         # try:
         #     #sweep_name = self.header['sweep_signal'].lower().split(' ')[0]
