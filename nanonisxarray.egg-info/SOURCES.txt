@@ -3,6 +3,7 @@ README.md
 setup.py
 nanonisxarray/__init__.py
 nanonisxarray/file_io.py
+nanonisxarray/modules.py
 nanonisxarray/nanonisio.py
 nanonisxarray.egg-info/PKG-INFO
 nanonisxarray.egg-info/SOURCES.txt
