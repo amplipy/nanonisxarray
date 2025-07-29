@@ -604,7 +604,7 @@ class Scan(NanonisFile):
         """
         channs = list(self.header['data_info']['Name'])
         nchanns = len(channs)
-        print(channs)
+        #print(channs)
         nx, ny = self.header['scan_pixels']
         
         # assume both directions for now
